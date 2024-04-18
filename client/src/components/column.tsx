@@ -6,11 +6,11 @@ import { Badge } from "./ui/badge";
 import { Checkbox } from "./ui/checkbox";
 
 import { labels, priorities, statuses } from "../data/data";
-import { Task } from "../data/schema";
+import { Schema } from "../data/schema";
 import { ColumnHeader } from "./columnHeader";
-import { DataTableRowActions } from "./data-table-row-actions";
+import { DataTableRowActions } from "./rowActions";
 
-export const columns: ColumnDef<Task>[] = [
+export const columns: ColumnDef<Schema>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -65,7 +65,7 @@ export const columns: ColumnDef<Task>[] = [
   {
     accessorKey: "status",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Status" />
+      <ColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => {
       const status = statuses.find(

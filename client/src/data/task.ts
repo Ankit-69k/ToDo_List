@@ -1,4 +1,6 @@
-[
+import { Schema } from "./schema"
+
+ export const Tasks: Schema[] = [
     {
       "id": "TASK-8782",
       "title": "You can't compress the program without quantifying the open-source SSD pixel!",
