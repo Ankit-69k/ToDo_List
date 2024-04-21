@@ -1,16 +1,15 @@
 package main
 
-import (
+import(
 	"fmt"
 	"log"
 	"net/http"
-	"toDO_list/server/middleware"
-	"toDO_list/server/routes"
-	"toDO_list/server/models"
+	"server/router"
 )
 
 func main(){
-	r := routes.Router()
-	fmt.Println("Starting server on the port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	r := router.Router()
+	fmt.Println("starting the server on port 9000...")
+
+	log.Fatal(http.ListenAndServe(":9000", r))
 }
