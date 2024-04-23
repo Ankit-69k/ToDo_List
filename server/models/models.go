@@ -1,7 +1,7 @@
 package models
 
-type ToDoList struct{
-	ID			string						
-	Task		string			
-	Status		string	
+type ToDoItem struct{
+	ID			string			`json:"id"`		
+	Task		string			`json:"title"`
+	Status		string			`json:"status"`
 }
