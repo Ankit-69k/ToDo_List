@@ -1,15 +1,19 @@
 package main
 
-import(
-	"fmt"
+import (
 	"log"
-	"net/http"
+	"server/db"
 	"server/router"
 )
 
-func main(){
-	r := router.Router()
-	fmt.Println("starting the server on port 9000...")
-
-	log.Fatal(http.ListenAndServe(":9000", r))
+func main() {
+	// Initialize Firestore client
+	store, err := db.InitFirestore()
+	if err != nil {
+		log.Println("Error: Firestore client not initialized")
+		return
+	}
+	s := router.NewServer(store)
+	
+	s.ListenAndServe()
 }

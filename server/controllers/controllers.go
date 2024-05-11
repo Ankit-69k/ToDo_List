@@ -1,151 +1,82 @@
 package controllers
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
+	"server/db"
 	"server/models"
 
 	"cloud.google.com/go/firestore"
-	"github.com/gorilla/mux"
 )
 
-var firestoreClient *firestore.Client
-
-func GetAllTasks(w http.ResponseWriter, r *http.Request){
-	ctx := r.Context()
-	userUID, ok := ctx.Value("userUID").(string)
-	if !ok {
-		http.Error(w, "User UID not found", http.StatusUnauthorized)
-		return
-	}
-
-	docs, err := firestoreClient.Collection("todos").Doc(userUID).Collection("items").Documents(ctx).GetAll()
-	if err != nil {
-		http.Error(w, "Error fetching to-do items", http.StatusInternalServerError)
-		return
-	}
-
-	todoItems := []models.ToDoItem{}
-	for _, doc := range docs {
-		item := models.ToDoItem{
-			ID:     doc.Ref.ID,
-			Task:   doc.Data()["task"].(string),
-			Status: doc.Data()["status"].(string),
-		}
-		todoItems = append(todoItems, item)
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(todoItems)
+type DB interface {
+	GetAllTasks(id string) (db.TaskResponse, error)
+	CreateTask(task models.ToDoItem)
+	DeleteTask(id string)
 }
 
-func CreateTask(w http.ResponseWriter, r *http.Request){
-	ctx := r.Context()
-	userUID, ok := ctx.Value("userUID").(string)
-	if !ok {
-		http.Error(w, "User UID not found", http.StatusUnauthorized)
-		return
-	}
+func GetAllTasks(id string, db *db.Store) (*[]db.TaskResponse, error) {
 
-	var todoItem models.ToDoItem
-	if err := json.NewDecoder(r.Body).Decode(&todoItem); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
+	tasks,err := db.GetAllTasks(id)
 
-	// Generate a unique ID for the new item
-	docRef := firestoreClient.Collection("todos").Doc(userUID).Collection("items").NewDoc()
-	todoItem.ID = docRef.ID
-
-	_, err := docRef.Set(ctx, map[string]interface{}{
-		"task":   todoItem.Task,
-		"status": todoItem.Status,
-	})
 	if err != nil {
-		http.Error(w, "Error adding to-do item", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(todoItem)
+	return &tasks, nil
 }
 
-func TaskUpdate(w http.ResponseWriter, r *http.Request){
-	ctx := r.Context()
-	userUID, ok := ctx.Value("userUID").(string)
-	if !ok {
-		http.Error(w, "User UID not found", http.StatusUnauthorized)
-		return
-	}
-
-	// Extract the to-do item ID from the request
-	vars := mux.Vars(r)
-	itemID := vars["id"]
-	if itemID == "" {
-		http.Error(w, "To-do item ID is required", http.StatusBadRequest)
-		return
-	}
-
-	var todoItem models.ToDoItem
-	if err := json.NewDecoder(r.Body).Decode(&todoItem); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	docRef := firestoreClient.Collection("todos").Doc(userUID).Collection("items").Doc(itemID)
+func CreateTask(task models.ToDoItem,db *db.Store) (*firestore.DocumentRef,error) {
+	docRef, err := db.CreateTask(task);
 	
-
-	// Update the task and status of the existing to-do item
-	_, err := docRef.Update(ctx, []firestore.Update{
-		{
-			Path:  "task",
-			Value: todoItem.Task,
-		},
-		{
-			Path:  "status",
-			Value: todoItem.Status,
-		},
-	})
 	if err != nil {
-		http.Error(w, "Error updating to-do item", http.StatusInternalServerError)
-		return
+		fmt.Println("Error while creating task")
+		return nil,err
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(todoItem)
+	fmt.Printf("Task created successfully with ID: %s\n", docRef.ID)
+
+	return docRef,err
 }
 
+func DeleteTask(id string,db *db.Store) (*firestore.WriteResult, error){
+	doc, err := db.DeleteTask(id);
 
-
-func DeleteTask(w http.ResponseWriter, r *http.Request){
-	ctx := r.Context()
-	userUID, ok := ctx.Value("userUID").(string)
-	if !ok {
-		http.Error(w, "User UID not found", http.StatusUnauthorized)
-		return
-	}
-
-	// Extract the to-do item ID from the request
-	vars := mux.Vars(r)
-	itemID := vars["id"]
-	if itemID == "" {
-		http.Error(w, "To-do item ID is required", http.StatusBadRequest)
-		return
-	}
-
-	docRef := firestoreClient.Collection("todos").Doc(userUID).Collection("items").Doc(itemID)
-
-	// Delete the to-do item
-	_, err := docRef.Delete(ctx)
 	if err != nil {
-		http.Error(w, "Error deleting to-do item", http.StatusInternalServerError)
-		return
+		fmt.Println("Error while deleting task")
+		return nil,err
 	}
 
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "To-do item deleted successfully")
+	fmt.Printf("Task deleted successfully at: %s\n", doc.UpdateTime)
+
+	return doc,err
 }
 
-	
+// func DeleteTask(w http.ResponseWriter, r *http.Request) {
+// 	// Initialize Firestore client
+// 	firestoreClient, err := db.InitFirestore()
+// 	if err != nil {
+// 		http.Error(w, "Firestore client not initialized", http.StatusInternalServerError)
+// 		log.Println("Error: Firestore client not initialized")
+// 		return
+// 	}
 
+// 	// Get task ID from URL
+// 	taskID := r.URL.Path[len("/api/deleteTask/"):]
+// 	if taskID == "" {
+// 		http.Error(w, "Task ID not provided", http.StatusBadRequest)
+// 		log.Println("Error: Task ID not provided")
+// 		return
+// 	}
+
+// 	// Delete task from Firestore
+// 	_, err = firestoreClient.Collection("Tasks").Doc(taskID).Delete(r.Context())
+// 	if err != nil {
+// 		http.Error(w, "Failed to delete task", http.StatusInternalServerError)
+// 		log.Println("Error deleting task from Firestore:", err)
+// 		return
+// 	}
+
+// 	// Set response status
+// 	w.WriteHeader(http.StatusNoContent)
+// 	log.Println("Task with ID", taskID, "deleted successfully")
+// }

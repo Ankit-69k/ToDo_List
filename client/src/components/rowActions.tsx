@@ -18,15 +18,22 @@ import {
 import { labels } from "../data/data";
 import { Schema } from "../data/schema";
 import { Ellipsis } from "lucide-react";
+import axios from "axios";
 
-interface DataTableRowActionsProps<TData> {
-  row: Row<TData>;
+interface DataTableRowActionsProps {
+  row: Row<Schema>;
 }
 
-export function DataTableRowActions<TData>({
+export function DataTableRowActions({
   row,
-}: DataTableRowActionsProps<TData>) {
-  const task = row.original as Schema;
+}: DataTableRowActionsProps) {
+  //const task = row.original as Schema;
+
+  const handleDelete = async () => {
+    console.log(row.original);
+    await axios.delete(`http://localhost:9000/api/deleteTask/${row.original.id}`)
+              .catch(error => console.error(error));
+  };
 
   return (
     <DropdownMenu>
@@ -44,7 +51,7 @@ export function DataTableRowActions<TData>({
         <DropdownMenuItem>Make a copy</DropdownMenuItem>
         <DropdownMenuItem>Favorite</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuSub>
+        {/* <DropdownMenuSub>
           <DropdownMenuSubTrigger>Labels</DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             <DropdownMenuRadioGroup value={task.label}>
@@ -55,9 +62,9 @@ export function DataTableRowActions<TData>({
               ))}
             </DropdownMenuRadioGroup>
           </DropdownMenuSubContent>
-        </DropdownMenuSub>
+        </DropdownMenuSub> */}
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleDelete}>
           Delete
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,7 +1,8 @@
 export type Schema = {
-    id: string;
+   id: string;
     title: string;
     status: string;
-    label: string;
-    priority: "high" | "medium" | "low";
+   label: string;
+   priority: "high" | "medium" | "low";
+   index?: number;
 }

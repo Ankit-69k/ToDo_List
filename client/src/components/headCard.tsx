@@ -9,8 +9,15 @@ import {
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
+import { useAuthContext } from "../hooks/auth";
 
 function HeadCard() {
+  const { user, logout  } = useAuthContext();
+
+  const handleLogOut = async () => {
+    logout()
+  }
+
   return (
     <div className="flex items-center justify-between space-y-2">
       <div className="text-left">
@@ -24,17 +31,17 @@ function HeadCard() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-9 w-9">
-                <AvatarImage src="/avatars/03.png" alt="@shadcn" />
-                <AvatarFallback>AK</AvatarFallback>
+                <AvatarImage src={user.photoURL} alt="@ak" />
+                <AvatarFallback>{user.displayName ? (user.displayName[0] + user.displayName[user.displayName.indexOf(" ") + 1]) : "NA"}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Ankit</p>
+                <p className="text-sm font-medium leading-none">{user.displayName}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  ak_69@gmail.com
+                  {user.email}
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -43,7 +50,7 @@ function HeadCard() {
               <DropdownMenuItem>Profile</DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Log out</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogOut}>Log out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
